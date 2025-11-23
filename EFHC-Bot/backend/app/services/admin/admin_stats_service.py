@@ -1,7 +1,14 @@
 """Admin stats service."""
 
+from __future__ import annotations
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ...crud.admin.admin_stats_crud import AdminStatsCRUD
+
 
 class AdminStatsService:
-    """Placeholder admin stats service."""
+    """Сервис для админских метрик."""
 
-    pass
+    def __init__(self, session: AsyncSession):
+        self.crud = AdminStatsCRUD(session)

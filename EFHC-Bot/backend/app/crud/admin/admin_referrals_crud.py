@@ -1,7 +1,12 @@
 """Admin referrals CRUD operations."""
 
+from __future__ import annotations
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class AdminReferralsCRUD:
-    """Placeholder admin referrals CRUD."""
+    """CRUD для админских проверок рефералок."""
 
-    pass
+    def __init__(self, session: AsyncSession):
+        self.session = session

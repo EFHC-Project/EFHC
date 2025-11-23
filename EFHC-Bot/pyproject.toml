@@ -1,3 +1,25 @@
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "efhc-bot"
+version = "0.0.1"
+description = "EFHC Bot canonical stack"
+requires-python = ">=3.11"
+authors = [{name = "EFHC Team"}]
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "I", "B", "Q"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = true
+strict_optional = false
