@@ -1,8 +1,26 @@
-"""User-facing routes for profile management."""
+"""Профиль пользователя: регистрация и чтение (без денежных действий)."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
+# ======================================================================
+# EFHC Bot — routes/user_routes.py
+# ----------------------------------------------------------------------
+# Назначение: создание пользователя и получение профиля с ETag. Денежные
+#             операции здесь не выполняются.
+# Канон/инварианты:
+#   • Балансы не изменяются, маршруты только читают/создают пользователя.
+#   • P2P и EFHC→kWh отсутствуют; Idempotency-Key не требуется, так как
+#     деньги не двигаются.
+#   • GET возвращает ETag и поддерживает 304.
+# ИИ-защиты/самовосстановление:
+#   • Повторная регистрация возвращает существующую запись (idempotent
+#     read-through), не создавая дублей.
+#   • ETag стабилен благодаря json_for_etag + stable_etag.
+# Запреты:
+#   • Нет денежных транзакций, нет OFFSET-пагинации.
+# ======================================================================
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,11 +33,21 @@ router = APIRouter()
 
 
 class UserCreateRequest(BaseModel):
+    """Запрос на регистрацию пользователя через Telegram ID.
+
+    Вход: telegram_id (int), опциональный ton_wallet.
+    Побочные эффекты: создаёт запись в таблице users, денег не двигает.
+    Идемпотентность: повтор с тем же telegram_id возвращает существующего
+    пользователя без дублей.
+    """
+
     telegram_id: int
     ton_wallet: str | None = None
 
 
 class UserResponse(BaseModel):
+    """Ответ с публичным профилем пользователя."""
+
     id: int
     telegram_id: int
     main_balance: str
@@ -30,6 +58,8 @@ class UserResponse(BaseModel):
 
     @classmethod
     def from_model(cls, user: User) -> "UserResponse":
+        """Построить DTO из ORM-модели без изменения балансов."""
+
         return cls(
             id=user.id,
             telegram_id=user.telegram_id,
@@ -42,8 +72,21 @@ class UserResponse(BaseModel):
 
 
 @router.post("/", response_model=UserResponse)
-async def register_user(payload: UserCreateRequest, db: AsyncSession = Depends(get_db)) -> UserResponse:
-    existing = await db.scalar(select(User).where(User.telegram_id == payload.telegram_id))
+async def register_user(
+    payload: UserCreateRequest, db: AsyncSession = Depends(get_db)
+) -> UserResponse:
+    """Создать или вернуть существующего пользователя по telegram_id.
+
+    Вход: тело UserCreateRequest (telegram_id, ton_wallet).
+    Побочные эффекты: создаёт запись users при отсутствии; не двигает деньги.
+    Идемпотентность: повторный вызов с тем же telegram_id возвращает
+    существующего пользователя.
+    Исключения: отсутствуют, кроме ошибок БД при вставке.
+    """
+
+    existing = await db.scalar(
+        select(User).where(User.telegram_id == payload.telegram_id)
+    )
     if existing:
         return UserResponse.from_model(existing)
     user = User(telegram_id=payload.telegram_id, ton_wallet=payload.ton_wallet)
@@ -59,6 +102,15 @@ async def get_profile(
     response: Response,
     db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
+    """Вернуть профиль пользователя с ETag и 304.
+
+    Вход: path-параметр telegram_id.
+    Выход: UserResponse; при совпадении ETag отдаётся 304 без тела.
+    Побочные эффекты: отсутствуют, деньги не двигаются.
+    Идемпотентность: GET детерминирован, ETag стабилен.
+    Исключения: 404, если пользователь не найден.
+    """
+
     user = await db.scalar(select(User).where(User.telegram_id == telegram_id))
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -69,3 +121,12 @@ async def get_profile(
         return payload
     response.headers["ETag"] = etag
     return payload
+
+
+# ======================================================================
+# Пояснения «для чайника»:
+#   • Эти ручки не двигают EFHC и не требуют Idempotency-Key.
+#   • Повторный POST с тем же telegram_id вернёт существующего пользователя.
+#   • GET отдаёт ETag; If-None-Match → 304, что экономит трафик.
+#   • Здесь нет P2P и EFHC→kWh — только чтение профиля и базовая регистрация.
+# ======================================================================
