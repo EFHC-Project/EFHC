@@ -35,6 +35,7 @@ class TonInboxLog(Base):
 
     tx_hash: Mapped[str] = mapped_column(String(128), primary_key=True)
     memo: Mapped[str] = mapped_column(String(256))
+    amount: Mapped[Decimal] = mapped_column(DECIMAL, default=Decimal("0"))
     status: Mapped[str] = mapped_column(String(32), default="received")
     retries_count: Mapped[int] = mapped_column(Integer, default=0)
     next_retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

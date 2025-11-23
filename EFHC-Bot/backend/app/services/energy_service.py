@@ -1,4 +1,9 @@
-"""Сервис расчёта генерации энергии по панелям."""
+"""Сервис расчёта генерации энергии по панелям.
+
+Простая функция для новичков: вычисляем энергию за фиксированный период,
+применяем VIP-ставку при наличии NFT и аккумулируем в балансе пользователя.
+Все значения квантуются до 8 знаков вниз, как требует канон EFHC.
+"""
 
 from __future__ import annotations
 
@@ -21,13 +26,14 @@ class EnergyService:
 
         Если пользователь VIP, используется повышенная ставка; иначе базовая.
         Результат округляется вниз до 8 знаков и сохраняется в балансе
-        пользователя, а также накапливается в total_generated_kwh.
+        пользователя, а также накапливается в ``total_generated_kwh``.
         """
-+
-+        if seconds <= 0 or not self.panels:
-+            return Decimal("0")
-+        rate = GEN_PER_SEC_VIP_KWH if self.user.is_vip else GEN_PER_SEC_BASE_KWH
-+        produced = quantize_decimal(rate * Decimal(seconds) * Decimal(len(self.panels)))
-+        self.user.available_kwh += produced
-+        self.user.total_generated_kwh += produced
-+        return produced
+
+        if seconds <= 0 or not self.panels:
+            return Decimal("0")
+
+        rate = GEN_PER_SEC_VIP_KWH if self.user.is_vip else GEN_PER_SEC_BASE_KWH
+        produced = quantize_decimal(rate * Decimal(seconds) * Decimal(len(self.panels)))
+        self.user.available_kwh += produced
+        self.user.total_generated_kwh += produced
+        return produced
