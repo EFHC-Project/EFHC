@@ -1,7 +1,12 @@
 """Admin bank CRUD operations."""
 
+from __future__ import annotations
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class AdminBankCRUD:
-    """Placeholder admin bank CRUD."""
+    """CRUD для админского доступа к банку."""
 
-    pass
+    def __init__(self, session: AsyncSession):
+        self.session = session
