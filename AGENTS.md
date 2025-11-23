@@ -119,7 +119,7 @@
 
 2.5.1. Любой новый или обновлённый код обязан соответствовать:
 
-1. **PEP8** (отступы, имена, порядок импортов, длина строки ≤ 88 символов);
+1. **PEP8** (отступы, имена, порядок импортов, длина строки ≤ 79 символов);
 2. **Black-подобному форматированию** (общий стиль скобок/отступов);
 3. **ruff/flake8-подобному линтингу**:
 
@@ -565,359 +565,352 @@ Codex и проект **никогда не имеют права**:
 7. Комментарии соответствуют Эталону v1.1.
 8. Код проходит PEP8/black/ruff/mypy-проверку.
 
-## 15. Каноническая канон схема бота EFHC-Bot
+---
+
+## 16. Каноническая канон схема бота EFHC-Bot
+
+Структура репозитория фиксирована каноном v2.8.  
+Codex обязан раскладывать и поддерживать код **строго 1:1** по этой карте, не создавая новых имён/папок без прямого указания пользователя.
+
 EFHC-Bot/
-├─ README.md 
-├─ CHANGELOG.md 
-├─ LICENSE 
-├─ CODE_OF_CONDUCT.md 
-├─ CONTRIBUTING.md 
-├─ SECURITY.md 
-├─ .gitignore 
-├─ .editorconfig 
-├─ .gitattributes 
-├─ .pre-commit-config.yaml 
-├─ pyproject.toml 
-├─ requirements.txt 
-├─ requirements-dev.txt 
-├─ Makefile 
-│ 
-├─ .env.neon.example 
-├─ .env.local.example 
-├─ .env.prod.example 
-├─ .env.ci.example 
-│ 
-├─ docs/ 
-│  ├─ EFHC_CANON.md 
-│  ├─ ARCHITECTURAL_LOCKS.md 
-│  ├─ ADMIN_PANEL_SPEC.md 
-│  ├─ API_GUIDE.md 
-│  ├─ TON_MEMO_SPEC.md 
-│  ├─ RATING_RULES.md 
-│  ├─ REFERRALS_RULES.md 
-│  ├─ ENERGY_RULES.md 
-│  ├─ SCHEDULER_PLAYBOOK.md 
-│  ├─ DB_SCHEMA.md 
-│  ├─ RUNBOOKS/ 
-│  │  ├─ INCIDENTS.md 
-│  │  ├─ RECONCILIATION.md 
-│  │  └─ BANK_DEFICIT.md 
-│  └─ ADR/ 
-│     ├─ 0001-db-choice-neon.md 
-│     ├─ 0002-idempotency-readthrough.md 
-│     └─ 0003-per-sec-only.md 
-│ 
-├─ ops/ 
-│  ├─ docker/ 
-│  │  ├─ Dockerfile.backend 
-│  │  ├─ Dockerfile.frontend 
-│  │  └─ docker-compose.yml 
-│  ├─ k8s/ 
-│  │  ├─ backend-deployment.yaml 
-│  │  ├─ backend-service.yaml 
-│  │  ├─ frontend-deployment.yaml 
-│  │  ├─ frontend-service.yaml 
-│  │  ├─ ingress.yaml 
-│  │  └─ secrets.example.yaml 
-│  ├─ render/ 
-│  │  └─ render.yaml 
-│  ├─ vercel/ 
-│  │  └─ vercel.json 
-│  ├─ monitoring/ 
-│  │  ├─ prometheus.yml 
-│  │  ├─ grafana/ 
-│  │  │  ├─ dashboards/ 
-│  │  │  │  ├─ backend.json 
-│  │  │  │  ├─ scheduler.json 
-│  │  │  │  └─ ton_watcher.json 
-│  │  │  └─ datasources.yaml 
-│  │  └─ sentry.example.yaml 
-│  └─ scripts/ 
-│     ├─ bootstrap_neon.sql 
-│     ├─ seed_data.py 
-│     ├─ export_openapi.py 
-│     └─ recon_ton.py 
-│ 
-├─ .github/ 
-│  └─ workflows/ 
-│     ├─ ci.yml 
-│     ├─ cd-backend.yml 
-│     └─ cd-frontend.yml 
-│ 
-├─ backend/ 
-│  ├─ run.py 
-│  ├─ openapi/ 
-│  │  └─ openapi.json 
-│  ├─ alembic.ini 
-│  ├─ migrations/ 
-│  │  ├─ env.py 
-│  │  ├─ script.py.mako 
-│  │  └─ versions/ 
-│  │     ├─ 0001_init.py 
-│  │     ├─ 0002_indexes.py 
-│  │     ├─ 0003_unique_keys.py 
-│  │     └─ 0004_rating_snapshots.py 
-│  └─ app/ 
-│     ├─ __init__.py 
-│     ├─ core/ 
-│     │  ├─ __init__.py 
-│     │  ├─ config_core.py 
-│     │  ├─ database_core.py 
-│     │  ├─ logging_core.py 
-│     │  ├─ security_core.py 
-│     │  ├─ system_locks.py 
-│     │  ├─ utils_core.py 
-│     │  ├─ errors_core.py 
-│     │  └─ deps.py 
-│     ├─ integrations/ 
-│     │  ├─ ton_api.py 
-│     │  └─ telegram_ads_api.py 
-│     ├─ models/ 
-│     │  ├─ __init__.py 
-│     │  ├─ user_models.py 
-│     │  ├─ panels_models.py 
-│     │  ├─ shop_models.py 
-│     │  ├─ tasks_models.py 
-│     │  ├─ referral_models.py 
-│     │  ├─ rating_models.py 
-│     │  ├─ lotteries_models.py 
-│     │  ├─ order_models.py 
-│     │  ├─ achievements_models.py 
-│     │  ├─ bank_models.py 
-│     │  ├─ transactions_models.py 
-│     │  └─ ads_models.py 
-│     ├─ schemas/ 
-│     │  ├─ __init__.py 
-│     │  ├─ common_schemas.py 
-│     │  ├─ user_schemas.py 
-│     │  ├─ panels_schemas.py 
-│     │  ├─ exchange_schemas.py 
-│     │  ├─ shop_schemas.py 
-│     │  ├─ tasks_schemas.py 
-│     │  ├─ referrals_schemas.py 
-│     │  ├─ rating_schemas.py 
-│     │  ├─ orders_schemas.py 
-│     │  ├─ lotteries_schemas.py 
-│     │  ├─ transactions_schemas.py 
-│     │  └─ ads_schemas.py 
-│     ├─ crud/ 
-│     │  ├─ __init__.py 
-│     │  ├─ user_crud.py 
-│     │  ├─ panels_crud.py 
-│     │  ├─ transactions_crud.py 
-│     │  ├─ tasks_crud.py 
-│     │  ├─ referrals_crud.py 
-│     │  ├─ ranks_crud.py 
-│     │  ├─ shop_crud.py 
-│     │  ├─ order_crud.py 
- │     │  ├─ lotteries_crud.py 
- │     │  └─ admin/ 
- │     │     ├─ __init__.py 
- │     │     ├─ admin_users_crud.py 
- │     │     ├─ admin_panels_crud.py 
- │     │     ├─ admin_bank_crud.py 
- │     │     ├─ admin_referrals_crud.py 
- │     │     ├─ admin_lotteries_crud.py 
- │     │     ├─ admin_tasks_crud.py 
- │     │     ├─ admin_shop_crud.py 
- │     │     ├─ admin_withdrawals_crud.py 
- │     │     ├─ admin_stats_crud.py 
- │     │     └─ admin_ads_crud.py 
- │     ├─ services/ 
- │     │  ├─ __init__.py 
- │     │  ├─ transactions_service.py 
- │     │  ├─ energy_service.py 
- │     │  ├─ panels_service.py 
- │     │  ├─ exchange_service.py 
- │     │  ├─ ranks_service.py 
- │     │  ├─ referral_service.py 
- │     │  ├─ tasks_service.py 
- │     │  ├─ shop_service.py 
- │     │  ├─ orders_service.py 
- │     │  ├─ lotteries_service.py 
- │     │  ├─ watcher_service.py 
- │     │  ├─ nft_check_service.py 
- │     │  ├─ scheduler_service.py 
- │     │  ├─ reports_service.py 
- │     │  ├─ admin_service.py 
- │     │  └─ admin/ 
- │     │     ├─ __init__.py 
- │     │     ├─ admin_facade.py 
- │     │     ├─ admin_rbac.py 
- │     │     ├─ admin_logging.py 
- │     │     ├─ admin_settings.py 
- │     │     ├─ admin_notifications.py 
- │     │     ├─ admin_bank_service.py 
- │     │     ├─ admin_users_service.py 
- │     │     ├─ admin_panels_service.py 
- │     │     ├─ admin_referral_service.py 
- │     │     ├─ admin_wallets_service.py 
- │     │     ├─ admin_stats_service.py 
- │     │     ├─ admin_lotteries_service.py 
- │     │     ├─ admin_withdrawals_service.py 
- │     │     ├─ admin_tasks_service.py 
- │     │     └─ admin_ads_service.py 
- │     ├─ routes/ 
- │     │  ├─ __init__.py 
- │     │  ├─ user_routes.py 
- │     │  ├─ panels_routes.py 
- │     │  ├─ exchange_routes.py 
- │     │  ├─ shop_routes.py 
- │     │  ├─ tasks_routes.py 
- │     │  ├─ rating_routes.py 
- │     │  ├─ referrals_routes.py 
- │     │  ├─ withdraw_routes.py 
- │     │  ├─ lotteries_routes.py 
- │     │  ├─ ads_routes.py 
- │     │  └─ admin/ 
- │     │     ├─ admin_routes.py 
- │     │     ├─ admin_users_routes.py 
- │     │     ├─ admin_panels_routes.py 
- │     │     ├─ admin_bank_routes.py 
- │     │     ├─ admin_referrals_routes.py 
- │     │     ├─ admin_lotteries_routes.py 
- │     │     ├─ admin_tasks_routes.py 
- │     │     ├─ admin_shop_routes.py 
- │     │     ├─ admin_withdrawals_routes.py 
- │     │     ├─ admin_stats_routes.py 
- │     │     └─ admin_ads_routes.py 
- │     ├─ scheduler/ 
- │     │  ├─ generate_energy.py 
- │     │  ├─ check_vip_nft.py 
- │     │  ├─ check_ton_inbox.py 
- │     │  ├─ update_rating.py 
- │     │  ├─ archive_panels.py 
- │     │  ├─ lotteries_autorestart.py 
- │     │  ├─ tasks_autorestart.py 
- │     │  ├─ ads_rotation.py 
- │     │  └─ reports_daily.py 
- │     └─ bot/ 
- │        ├─ __init__.py 
- │        ├─ bot.py 
- │        ├─ keyboards.py 
- │        ├─ middlewares.py 
- │        ├─ states.py 
- │        ├─ texts.py 
- │        └─ handlers/ 
- │           ├─ start_handlers.py 
- │           ├─ panels_handlers.py 
- │           ├─ exchange_handlers.py 
- │           ├─ shop_handlers.py 
- │           ├─ tasks_handlers.py 
- │           ├─ referrals_handlers.py 
- │           ├─ rating_handlers.py 
-│           
-│           
-│           
-│           
-│              
-│              
-│              
-│              
-│              
-│              
-│              
-│              
-│              
-│              
-│ 
-├─ lotteries_handlers.py 
-├─ ads_handlers.py 
-├─ health_handlers.py 
-└─ admin/ 
-├─ admin_main_handlers.py 
-├─ admin_users_handlers.py 
-├─ admin_panels_handlers.py 
-├─ admin_shop_handlers.py 
-├─ admin_tasks_handlers.py 
-├─ admin_lotteries_handlers.py 
-├─ admin_referrals_handlers.py 
-├─ admin_withdrawals_handlers.py 
-├─ admin_stats_handlers.py 
-└─ admin_ads_handlers.py 
-├─ frontend/ 
-│  ├─ package.json 
-│  ├─ yarn.lock 
-│  ├─ tsconfig.json 
-│  ├─ next.config.js 
-│  ├─ postcss.config.js 
-│  ├─ tailwind.config.js 
-│  ├─ public/ 
-│  │  ├─ icons/ 
-│  │  ├─ images/ 
-│  │  └─ locale/ 
-│  │     ├─ ru.json 
-│  │     ├─ en.json 
-│  │     ├─ ua.json 
-│  │     ├─ de.json 
-│  │     ├─ fr.json 
-│  │     ├─ es.json 
-│  │     ├─ it.json 
-│  │     └─ pl.json 
-│  └─ src/ 
-│     ├─ pages/ 
-│     │  ├─ _app.tsx 
-│     │  ├─ index.tsx 
-│     │  ├─ panels.tsx 
-│     │  ├─ exchange.tsx 
-│     │  ├─ shop.tsx 
-│     │  ├─ tasks.tsx 
-│     │  ├─ ads.tsx 
-│     │  ├─ rating.tsx 
-│     │  ├─ referrals.tsx 
-│     │  └─ admin/ 
-│     │     ├─ index.tsx 
-│     │     ├─ users.tsx 
- │     │     ├─ panels.tsx 
- │     │     ├─ shop.tsx 
- │     │     ├─ tasks.tsx 
- │     │     ├─ lotteries.tsx 
- │     │     ├─ withdrawals.tsx 
- │     │     ├─ referrals.tsx 
- │     │     ├─ ads.tsx 
- │     │     └─ reports.tsx 
- │     ├─ components/ 
- │     │  ├─ EnergyGauge.tsx 
- │     │  ├─ PanelsList.tsx 
- │     │  ├─ ExchangePanel.tsx 
- │     │  ├─ ShopGrid.tsx 
- │     │  ├─ RatingTable.tsx 
- │     │  ├─ ReferralsTabs.tsx 
- │     │  ├─ AdsBanner.tsx 
- │     │  ├─ AdminCharts.tsx 
- │     │  ├─ AdminTable.tsx 
- │     │  └─ ui/ 
- │     │     ├─ Button.tsx 
- │     │     ├─ Card.tsx 
- │     │     ├─ Badge.tsx 
- │     │     ├─ Modal.tsx 
- │     ├─ lib/ 
- │     │  ├─ api.ts 
- │     │  ├─ auth.ts 
- │     │  ├─ i18n.ts 
- │     │  └─ store.ts 
- │     ├─ hooks/ 
- │     │  ├─ useForceSync.ts 
- │     │  └─ useCursorList.ts 
- │     └─ styles/ 
- │        └─ globals.css 
- │ 
- └─ tests/ 
- ├─ backend/ 
- │  ├─ unit/ 
- │  ├─ integration/ 
- │  ├─ contract/ 
- │  ├─ performance/ 
- │  └─ data/ 
- ├─ frontend/ 
- │  ├─ unit/ 
- │  ├─ e2e/ 
- │  └─ mocks/ 
- └─ load/ 
- └─ k6-scenarios/ 
- ├─ generation.js 
-├─ exchange.js 
-├─ lotteries.js 
-├─ ads.js 
-└─ traffic_mix.js
-+ дополнительные необходимые файлы для работы бота
+├─ README.md
+├─ CHANGELOG.md
+├─ LICENSE
+├─ CODE_OF_CONDUCT.md
+├─ CONTRIBUTING.md
+├─ SECURITY.md
+├─ .gitignore
+├─ .editorconfig
+├─ .gitattributes
+├─ .pre-commit-config.yaml
+├─ pyproject.toml
+├─ requirements.txt
+├─ requirements-dev.txt
+├─ Makefile
+│
+├─ .env.neon.example
+├─ .env.local.example
+├─ .env.prod.example
+├─ .env.ci.example
+│
+├─ docs/
+│  ├─ EFHC_CANON.md
+│  ├─ ARCHITECTURAL_LOCKS.md
+│  ├─ ADMIN_PANEL_SPEC.md
+│  ├─ API_GUIDE.md
+│  ├─ TON_MEMO_SPEC.md
+│  ├─ RATING_RULES.md
+│  ├─ REFERRALS_RULES.md
+│  ├─ ENERGY_RULES.md
+│  ├─ SCHEDULER_PLAYBOOK.md
+│  ├─ DB_SCHEMA.md
+│  ├─ RUNBOOKS/
+│  │  ├─ INCIDENTS.md
+│  │  ├─ RECONCILIATION.md
+│  │  └─ BANK_DEFICIT.md
+│  └─ ADR/
+│     ├─ 0001-db-choice-neon.md
+│     ├─ 0002-idempotency-readthrough.md
+│     └─ 0003-per-sec-only.md
+│
+├─ ops/
+│  ├─ docker/
+│  │  ├─ Dockerfile.backend
+│  │  ├─ Dockerfile.frontend
+│  │  └─ docker-compose.yml
+│  ├─ k8s/
+│  │  ├─ backend-deployment.yaml
+│  │  ├─ backend-service.yaml
+│  │  ├─ frontend-deployment.yaml
+│  │  ├─ frontend-service.yaml
+│  │  ├─ ingress.yaml
+│  │  └─ secrets.example.yaml
+│  ├─ render/
+│  │  └─ render.yaml
+│  ├─ vercel/
+│  │  └─ vercel.json
+│  ├─ monitoring/
+│  │  ├─ prometheus.yml
+│  │  ├─ grafana/
+│  │  │  ├─ dashboards/
+│  │  │  │  ├─ backend.json
+│  │  │  │  ├─ scheduler.json
+│  │  │  │  └─ ton_watcher.json
+│  │  │  └─ datasources.yaml
+│  │  └─ sentry.example.yaml
+│  └─ scripts/
+│     ├─ bootstrap_neon.sql
+│     ├─ seed_data.py
+│     ├─ export_openapi.py
+│     └─ recon_ton.py
+│
+├─ .github/
+│  └─ workflows/
+│     ├─ ci.yml
+│     ├─ cd-backend.yml
+│     └─ cd-frontend.yml
+│
+├─ backend/
+│  ├─ run.py
+│  ├─ openapi/
+│  │  └─ openapi.json
+│  ├─ alembic.ini
+│  ├─ migrations/
+│  │  ├─ env.py
+│  │  ├─ script.py.mako
+│  │  └─ versions/
+│  │     ├─ 0001_init.py
+│  │     ├─ 0002_indexes.py
+│  │     ├─ 0003_unique_keys.py
+│  │     └─ 0004_rating_snapshots.py
+│  └─ app/
+│     ├─ __init__.py
+│     ├─ core/
+│     │  ├─ __init__.py
+│     │  ├─ config_core.py
+│     │  ├─ database_core.py
+│     │  ├─ logging_core.py
+│     │  ├─ security_core.py
+│     │  ├─ system_locks.py
+│     │  ├─ utils_core.py
+│     │  ├─ errors_core.py
+│     │  └─ deps.py
+│     ├─ integrations/
+│     │  ├─ ton_api.py
+│     │  └─ telegram_ads_api.py
+│     ├─ models/
+│     │  ├─ __init__.py
+│     │  ├─ user_models.py
+│     │  ├─ panels_models.py
+│     │  ├─ shop_models.py
+│     │  ├─ tasks_models.py
+│     │  ├─ referral_models.py
+│     │  ├─ rating_models.py
+│     │  ├─ lotteries_models.py
+│     │  ├─ order_models.py
+│     │  ├─ achievements_models.py
+│     │  ├─ bank_models.py
+│     │  ├─ transactions_models.py
+│     │  └─ ads_models.py
+│     ├─ schemas/
+│     │  ├─ __init__.py
+│     │  ├─ common_schemas.py
+│     │  ├─ user_schemas.py
+│     │  ├─ panels_schemas.py
+│     │  ├─ exchange_schemas.py
+│     │  ├─ shop_schemas.py
+│     │  ├─ tasks_schemas.py
+│     │  ├─ referrals_schemas.py
+│     │  ├─ rating_schemas.py
+│     │  ├─ orders_schemas.py
+│     │  ├─ lotteries_schemas.py
+│     │  ├─ transactions_schemas.py
+│     │  └─ ads_schemas.py
+│     ├─ crud/
+│     │  ├─ __init__.py
+│     │  ├─ user_crud.py
+│     │  ├─ panels_crud.py
+│     │  ├─ transactions_crud.py
+│     │  ├─ tasks_crud.py
+│     │  ├─ referrals_crud.py
+│     │  ├─ ranks_crud.py
+│     │  ├─ shop_crud.py
+│     │  ├─ order_crud.py
+│     │  ├─ lotteries_crud.py
+│     │  └─ admin/
+│     │     ├─ __init__.py
+│     │     ├─ admin_users_crud.py
+│     │     ├─ admin_panels_crud.py
+│     │     ├─ admin_bank_crud.py
+│     │     ├─ admin_referrals_crud.py
+│     │     ├─ admin_lotteries_crud.py
+│     │     ├─ admin_tasks_crud.py
+│     │     ├─ admin_shop_crud.py
+│     │     ├─ admin_withdrawals_crud.py
+│     │     ├─ admin_stats_crud.py
+│     │     └─ admin_ads_crud.py
+│     ├─ services/
+│     │  ├─ __init__.py
+│     │  ├─ transactions_service.py
+│     │  ├─ energy_service.py
+│     │  ├─ panels_service.py
+│     │  ├─ exchange_service.py
+│     │  ├─ ranks_service.py
+│     │  ├─ referral_service.py
+│     │  ├─ tasks_service.py
+│     │  ├─ shop_service.py
+│     │  ├─ orders_service.py
+│     │  ├─ lotteries_service.py
+│     │  ├─ watcher_service.py
+│     │  ├─ nft_check_service.py
+│     │  ├─ scheduler_service.py
+│     │  ├─ reports_service.py
+│     │  ├─ admin_service.py
+│     │  └─ admin/
+│     │     ├─ __init__.py
+│     │     ├─ admin_facade.py
+│     │     ├─ admin_rbac.py
+│     │     ├─ admin_logging.py
+│     │     ├─ admin_settings.py
+│     │     ├─ admin_notifications.py
+│     │     ├─ admin_bank_service.py
+│     │     ├─ admin_users_service.py
+│     │     ├─ admin_panels_service.py
+│     │     ├─ admin_referral_service.py
+│     │     ├─ admin_wallets_service.py
+│     │     ├─ admin_stats_service.py
+│     │     ├─ admin_lotteries_service.py
+│     │     ├─ admin_withdrawals_service.py
+│     │     ├─ admin_tasks_service.py
+│     │     └─ admin_ads_service.py
+│     ├─ routes/
+│     │  ├─ __init__.py
+│     │  ├─ user_routes.py
+│     │  ├─ panels_routes.py
+│     │  ├─ exchange_routes.py
+│     │  ├─ shop_routes.py
+│     │  ├─ tasks_routes.py
+│     │  ├─ rating_routes.py
+│     │  ├─ referrals_routes.py
+│     │  ├─ withdraw_routes.py
+│     │  ├─ lotteries_routes.py
+│     │  ├─ ads_routes.py
+│     │  └─ admin/
+│     │     ├─ admin_routes.py
+│     │     ├─ admin_users_routes.py
+│     │     ├─ admin_panels_routes.py
+│     │     ├─ admin_bank_routes.py
+│     │     ├─ admin_referrals_routes.py
+│     │     ├─ admin_lotteries_routes.py
+│     │     ├─ admin_tasks_routes.py
+│     │     ├─ admin_shop_routes.py
+│     │     ├─ admin_withdrawals_routes.py
+│     │     ├─ admin_stats_routes.py
+│     │     └─ admin_ads_routes.py
+│     ├─ scheduler/
+│     │  ├─ generate_energy.py
+│     │  ├─ check_vip_nft.py
+│     │  ├─ check_ton_inbox.py
+│     │  ├─ update_rating.py
+│     │  ├─ archive_panels.py
+│     │  ├─ lotteries_autorestart.py
+│     │  ├─ tasks_autorestart.py
+│     │  ├─ ads_rotation.py
+│     │  └─ reports_daily.py
+│     └─ bot/
+│        ├─ __init__.py
+│        ├─ bot.py
+│        ├─ keyboards.py
+│        ├─ middlewares.py
+│        ├─ states.py
+│        ├─ texts.py
+│        └─ handlers/
+│           ├─ start_handlers.py
+│           ├─ panels_handlers.py
+│           ├─ exchange_handlers.py
+│           ├─ shop_handlers.py
+│           ├─ tasks_handlers.py
+│           ├─ referrals_handlers.py
+│           ├─ rating_handlers.py
+│           ├─ lotteries_handlers.py
+│           ├─ ads_handlers.py
+│           ├─ health_handlers.py
+│           └─ admin/
+│              ├─ admin_main_handlers.py
+│              ├─ admin_users_handlers.py
+│              ├─ admin_panels_handlers.py
+│              ├─ admin_shop_handlers.py
+│              ├─ admin_tasks_handlers.py
+│              ├─ admin_lotteries_handlers.py
+│              ├─ admin_referrals_handlers.py
+│              ├─ admin_withdrawals_handlers.py
+│              ├─ admin_stats_handlers.py
+│              └─ admin_ads_handlers.py
+│
+├─ frontend/
+│  ├─ package.json
+│  ├─ yarn.lock
+│  ├─ tsconfig.json
+│  ├─ next.config.js
+│  ├─ postcss.config.js
+│  ├─ tailwind.config.js
+│  ├─ public/
+│  │  ├─ icons/
+│  │  ├─ images/
+│  │  └─ locale/
+│  │     ├─ ru.json
+│  │     ├─ en.json
+│  │     ├─ ua.json
+│  │     ├─ de.json
+│  │     ├─ fr.json
+│  │     ├─ es.json
+│  │     ├─ it.json
+│  │     └─ pl.json
+│  └─ src/
+│     ├─ pages/
+│     │  ├─ _app.tsx
+│     │  ├─ index.tsx
+│     │  ├─ panels.tsx
+│     │  ├─ exchange.tsx
+│     │  ├─ shop.tsx
+│     │  ├─ tasks.tsx
+│     │  ├─ ads.tsx
+│     │  ├─ rating.tsx
+│     │  ├─ referrals.tsx
+│     │  └─ admin/
+│     │     ├─ index.tsx
+│     │     ├─ users.tsx
+│     │     ├─ panels.tsx
+│     │     ├─ shop.tsx
+│     │     ├─ tasks.tsx
+│     │     ├─ lotteries.tsx
+│     │     ├─ withdrawals.tsx
+│     │     ├─ referrals.tsx
+│     │     ├─ ads.tsx
+│     │     └─ reports.tsx
+│     ├─ components/
+│     │  ├─ EnergyGauge.tsx
+│     │  ├─ PanelsList.tsx
+│     │  ├─ ExchangePanel.tsx
+│     │  ├─ ShopGrid.tsx
+│     │  ├─ RatingTable.tsx
+│     │  ├─ ReferralsTabs.tsx
+│     │  ├─ AdsBanner.tsx
+│     │  ├─ AdminCharts.tsx
+│     │  ├─ AdminTable.tsx
+│     │  └─ ui/
+│     │     ├─ Button.tsx
+│     │     ├─ Card.tsx
+│     │     ├─ Badge.tsx
+│     │     ├─ Modal.tsx
+│     ├─ lib/
+│     │  ├─ api.ts
+│     │  ├─ auth.ts
+│     │  ├─ i18n.ts
+│     │  └─ store.ts
+│     ├─ hooks/
+│     │  ├─ useForceSync.ts
+│     │  └─ useCursorList.ts
+│     └─ styles/
+│        └─ globals.css
+│
+└─ tests/
+   ├─ backend/
+   │  ├─ unit/
+   │  ├─ integration/
+   │  ├─ contract/
+   │  ├─ performance/
+   │  └─ data/
+   ├─ frontend/
+   │  ├─ unit/
+   │  ├─ e2e/
+   │  └─ mocks/
+   └─ load/
+      └─ k6-scenarios/
+         ├─ generation.js
+         ├─ exchange.js
+         ├─ lotteries.js
+         ├─ ads.js
+         └─ traffic_mix.js
+
+Примечание: “+ дополнительные необходимые файлы для работы бота” допускается только по прямому указанию пользователя и после согласования названий/места в схеме.
