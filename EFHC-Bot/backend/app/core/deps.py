@@ -1,17 +1,45 @@
-"""Common FastAPI dependencies."""
+"""Shared FastAPI dependencies for EFHC backend."""
 
 from __future__ import annotations
 
+# ======================================================================
+# EFHC Bot — core/deps.py
+# ----------------------------------------------------------------------
+# Назначение: централизованные Depends/хелперы для маршрутов и сервисов,
+#             без изменения бизнес-логики или балансов.
+# Канон/инварианты:
+#   • Модуль не двигает деньги; только выдаёт ресурсы (DB session и др.).
+#   • Используются async-сессии SQLAlchemy, совместимые с aiogram/scheduler.
+# ИИ-защеты/самовосстановление:
+#   • lifespan_session гарантирует rollback при ошибках и освобождение
+#     соединений, исключая протечки и зависшие транзакции.
+# Запреты:
+#   • Нет P2P, нет EFHC→kWh, нет бизнес-операций; только Depends.
+# ======================================================================
+
 from typing import AsyncIterator
 
-from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .database_core import lifespan_session
 
 
 async def get_db() -> AsyncIterator[AsyncSession]:
-    """Yield a database session for request scope."""
+    """Выдать async-сессию БД для запроса или фоновой задачи.
+
+    Назначение: безопасно оборачивает lifespan_session для FastAPI Depends.
+    Побочные эффекты: открывает транзакцию; коммитит/rollback-ит внутри
+    lifespan_session. Балансы не трогаются.
+    Идемпотентность: каждое обращение создаёт отдельный контекст сессии.
+    """
 
     async with lifespan_session() as session:
         yield session
+
+
+# ======================================================================
+# Пояснения «для чайника»:
+#   • Этот модуль не выполняет бизнес-логику и не меняет деньги.
+#   • get_db даёт безопасную сессию: при ошибке происходит rollback.
+#   • Используйте Depends(get_db) во всех роутингах/сервисах API.
+# ======================================================================
