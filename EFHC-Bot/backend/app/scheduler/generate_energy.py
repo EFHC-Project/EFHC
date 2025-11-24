@@ -49,6 +49,12 @@ async def _run_once_guarded() -> None:
         logger.info("energy snapshot", extra={"snapshot": snapshot, "at": utc_now().isoformat()})
 
 
+async def run_once() -> None:
+    """Публичная точка для SchedulerService: один тик с rescue/health."""
+
+    await _run_once_guarded()
+
+
 async def _run_forever(sleeper: Callable[[float], Awaitable[None]] = asyncio.sleep) -> None:
     """Бесконечный цикл с мягкими ретраями и контролем тика."""
 

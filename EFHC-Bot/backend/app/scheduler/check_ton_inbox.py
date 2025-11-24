@@ -53,7 +53,7 @@ async def _unlock(session) -> None:
 
 
 async def _run_once_guarded() -> None:
-    """Один тик: обрабатываем входящие и хвосты, не падая при ошибках."""
+    """Один защитный тик: новые + хвостовые TON-входящие, не падая при ошибках."""
 
     async with lifespan_session() as session:
         if not await _try_lock(session):
@@ -65,10 +65,17 @@ async def _run_once_guarded() -> None:
             await watcher.process_existing_backlog()
         except Exception as exc:  # noqa: BLE001 - фиксируем, но не падаем
             logger.exception(
-                "ton inbox tick failed", extra={"error": str(exc), "ts": utc_now().isoformat()}
+                "ton inbox tick failed",
+                extra={"error": str(exc), "ts": utc_now().isoformat()},
             )
         finally:
             await _unlock(session)
+
+
+async def run_once() -> None:
+    """Публичная точка для SchedulerService: один тик с защитами."""
+
+    await _run_once_guarded()
 
 
 async def _run_forever(sleeper: Callable[[float], Awaitable[None]] = asyncio.sleep) -> None:
