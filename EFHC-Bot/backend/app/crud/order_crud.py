@@ -8,23 +8,23 @@ from __future__ import annotations
 # Назначение:
 #   • Атомарные операции с заказами магазина (shop_orders) без изменения
 #     балансов и бизнес-логики.
-#   • Поддержка read-through идемпотентности по idempotency_key/tx_hash для
-#     безопасного повторного создания/обновления заказов.
+#   • Поддержка read-through идемпотентности по idempotency_key/tx_hash
+#     для безопасного повторного создания/обновления заказов.
 #
 # Канон/инварианты:
 #   • Модуль не двигает деньги и не меняет балансы пользователей/Банка.
 #   • Только cursor-friendly выборки (ORDER BY created_at DESC, id DESC),
 #     никаких OFFSET.
-#   • Уникальность заказов обеспечивается на уровне схемы (UNIQUE tx_hash) и
-#     сервисов (idempotency_key), здесь лишь удобные обёртки.
+#   • Уникальность заказов обеспечивается на уровне схемы (UNIQUE tx_hash)
+#     и сервисов (idempotency_key); здесь лишь удобные обёртки.
 #   • P2P и EFHC→kWh отсутствуют; любые денежные движения выполняют сервисы
 #     через банковский слой transactions_service.
 #
 # ИИ-защита/самовосстановление:
 #   • create_or_get_by_idempotency() возвращает уже существующий заказ при
 #     конфликте ключа вместо выброса — повторный вызов не создаёт дублей.
-#   • Обновления статуса используют SELECT ... FOR UPDATE, чтобы избежать гонок
-#     при финализации платежей.
+#   • Обновления статуса используют SELECT ... FOR UPDATE, чтобы избежать
+#     гонок при финализации платежей.
 #
 # Запреты:
 #   • Никакой бизнес-логики оплаты/доставки; только CRUD.
@@ -58,6 +58,20 @@ class OrderCRUD:
         """
 
         return await self.session.get(ShopOrder, int(order_id))
+
+    async def create(self, order: ShopOrder) -> ShopOrder:
+        """
+        Сохранить новый заказ и вернуть его с первичным ключом.
+
+        Назначение: аккуратное добавление без бизнес-логики. Балансы не
+        меняются, commit выполняется на уровне вызывающего кода.
+        Идемпотентность: не обеспечивает сама по себе; используйте
+        create_or_get_by_idempotency, если нужен read-through.
+        """
+
+        self.session.add(order)
+        await self.session.flush()
+        return order
 
     async def get_by_idempotency_key(
         self, idempotency_key: str
@@ -107,6 +121,31 @@ class OrderCRUD:
                 return existing_tx
 
         self.session.add(order)
+        await self.session.flush()
+        return order
+
+    async def attach_tx_hash_if_absent(
+        self, order_id: int, tx_hash: str, memo: Optional[str] = None
+    ) -> ShopOrder | None:
+        """
+        Присвоить tx_hash заказу, если он ещё не установлен.
+
+        Назначение: используется вотчером/админкой, чтобы сопоставить входящий
+        платёж с заказом. Не двигает деньги.
+        Идемпотентность: повтор с тем же tx_hash просто вернёт актуальный
+        заказ; значение не перезаписывается, если уже задано.
+        """
+
+        order = await self.session.get(
+            ShopOrder, int(order_id), with_for_update=True
+        )
+        if order is None:
+            return None
+
+        if order.tx_hash is None:
+            order.tx_hash = tx_hash
+        if memo and not order.memo:
+            order.memo = memo
         await self.session.flush()
         return order
 
@@ -165,6 +204,63 @@ class OrderCRUD:
         stmt: Select[ShopOrder] = (
             select(ShopOrder)
             .where(ShopOrder.user_id == int(user_id))
+            .order_by(ShopOrder.created_at.desc(), ShopOrder.id.desc())
+            .limit(limit)
+        )
+
+        if cursor:
+            ts, oid = cursor
+            stmt = stmt.where(
+                (ShopOrder.created_at < ts)
+                | ((ShopOrder.created_at == ts) & (ShopOrder.id < oid))
+            )
+
+        result: Iterable[ShopOrder] = await self.session.scalars(stmt)
+        return list(result)
+
+    async def list_cursor(
+        self, *, limit: int, cursor: tuple[datetime, int] | None = None
+    ) -> list[ShopOrder]:
+        """
+        Вернуть все заказы (например, для админ-списка) по курсору.
+
+        Cursor: (created_at, id) — строго меньше предыдущего курсора.
+        Денежные операции не выполняются.
+        """
+
+        stmt: Select[ShopOrder] = (
+            select(ShopOrder)
+            .order_by(ShopOrder.created_at.desc(), ShopOrder.id.desc())
+            .limit(limit)
+        )
+
+        if cursor:
+            ts, oid = cursor
+            stmt = stmt.where(
+                (ShopOrder.created_at < ts)
+                | ((ShopOrder.created_at == ts) & (ShopOrder.id < oid))
+            )
+
+        result: Iterable[ShopOrder] = await self.session.scalars(stmt)
+        return list(result)
+
+    async def list_by_status_cursor(
+        self,
+        *,
+        status: str,
+        limit: int,
+        cursor: tuple[datetime, int] | None = None,
+    ) -> list[ShopOrder]:
+        """
+        Вернуть заказы по статусу с курсорной сортировкой.
+
+        Используется админкой/вотчером для выборки PENDING/PAID заказов без
+        OFFSET. Денег не двигает.
+        """
+
+        stmt: Select[ShopOrder] = (
+            select(ShopOrder)
+            .where(ShopOrder.status == status)
             .order_by(ShopOrder.created_at.desc(), ShopOrder.id.desc())
             .limit(limit)
         )
