@@ -1,7 +1,12 @@
 """Admin ads CRUD operations."""
 
+from __future__ import annotations
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class AdminAdsCRUD:
-    """Placeholder admin ads CRUD."""
+    """CRUD для управления рекламными кампаниями."""
 
-    pass
+    def __init__(self, session: AsyncSession):
+        self.session = session

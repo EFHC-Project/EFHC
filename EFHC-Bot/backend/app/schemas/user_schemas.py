@@ -1,9 +1,137 @@
-"""User schemas."""
+# -*- coding: utf-8 -*-
+# backend/app/schemas/user_schemas.py
+# =============================================================================
+# Назначение кода:
+# Pydantic-схемы пользовательских ответов EFHC Bot: профиль/балансы, сводка
+# панелей, предпросмотр обмена. Используются в user_routes и связанных сервисах.
+#
+# Канон / инварианты:
+# • Денежные и энергетические величины наружу — только строкой с 8 знаками.
+# • Никаких «суточных» ставок: фронту отдаём только посекундные константы:
+#   gen_per_sec_base_kwh и gen_per_sec_vip_kwh.
+# • Раздельный учёт энергии: total_generated_kwh (для рейтинга) и available_kwh
+#   (для обмена) — не смешиваем.
+#
+# ИИ-защиты:
+# • Централизованная нормализация чисел через common_schemas.d8_str.
+# • Схемы не выполняют бизнес-логики, только валидируют и фиксируют форму.
+# • Согласованы с Cursor/ETag-контрактами (используются в других схемах).
+#
+# Запреты:
+# • Нет расчётов/изменений балансов; схема — не место для алгоритмов.
+# • Нельзя возвращать float или Decimal — только str(Decimal(8)).
+# =============================================================================
 
-from pydantic import BaseModel
+from __future__ import annotations
+
+# =============================================================================
+# Импорты
+# -----------------------------------------------------------------------------
+from typing import Any, Optional
+
+from pydantic import BaseModel, Field, validator
+
+from backend.app.schemas.common_schemas import (
+    d8_str,
+    ExchangePreviewDTO,  # используем как готовую схему предпросмотра обмена
+)
+
+# =============================================================================
+# Пользовательский профиль (балансы, флаги, ставки генерации в секундах)
+# -----------------------------------------------------------------------------
 
 
-class UserSchema(BaseModel):
-    """Placeholder user schema."""
+class UserProfileOut(BaseModel):
+    """
+    Профиль пользователя + основные балансы и фиксированные ставки генерации.
 
-    id: int | None = None
+    Поля:
+      • telegram_id — числовой ID телеграма.
+      • username — ник (может отсутствовать).
+      • is_vip — VIP по наличию NFT из коллекции.
+      • main_balance / bonus_balance — строки с 8 знаками (EFHC).
+      • available_kwh / total_generated_kwh — строки с 8 знаками (кВт·ч).
+      • gen_per_sec_base_kwh / gen_per_sec_vip_kwh — константы ставок в секундах.
+    """
+
+    telegram_id: int = Field(..., description="Телеграм-ID пользователя")
+    username: Optional[str] = Field(None, description="Никнейм в Telegram (если есть)")
+    is_vip: bool = Field(..., description="Флаг VIP-статуса (NFT в кошельке)")
+
+    main_balance: str = Field(
+        ..., description="Основной баланс EFHC (строкой с 8 знаками)"
+    )
+    bonus_balance: str = Field(
+        ..., description="Бонусный баланс EFHC (строкой с 8 знаками)"
+    )
+
+    available_kwh: str = Field(
+        ..., description="Доступная к обмену энергия (кВт·ч), str(8)"
+    )
+    total_generated_kwh: str = Field(
+        ..., description="Всего сгенерировано (кВт·ч), str(8)"
+    )
+
+    gen_per_sec_base_kwh: str = Field(
+        ..., description="Ставка без VIP, кВт·ч/сек, str(8)"
+    )
+    gen_per_sec_vip_kwh: str = Field(..., description="Ставка VIP, кВт·ч/сек, str(8)")
+
+    # Нормализация всех строк-чисел в единый формат с 8 знаками
+    @validator(
+        "main_balance",
+        "bonus_balance",
+        "available_kwh",
+        "total_generated_kwh",
+        "gen_per_sec_base_kwh",
+        "gen_per_sec_vip_kwh",
+        pre=True,
+    )
+    def _norm_q8(cls, v: Any) -> str:
+        return d8_str(v)
+
+
+# =============================================================================
+# Сводка по панелям для экрана Panels (лёгкая витрина)
+# -----------------------------------------------------------------------------
+
+
+class PanelsSummaryOut(BaseModel):
+    """
+    Короткая сводка по панелям пользователя:
+      • active_count — количество активных панелей,
+      • total_generated_by_panels — суммарная генерация по панелям (кВт·ч),
+      • nearest_expire_at — ближайшая дата завершения из активных (ISO) или None.
+    """
+
+    active_count: int = Field(..., description="Число активных панелей")
+    total_generated_by_panels: str = Field(
+        ..., description="Суммарная генерация по панелям (кВт·ч), str(8)"
+    )
+    nearest_expire_at: Optional[str] = Field(
+        None, description="ISO-дата ближайшего истечения срока (или None)"
+    )
+
+    @validator("total_generated_by_panels", pre=True)
+    def _norm_q8(cls, v: Any) -> str:
+        return d8_str(v)
+
+
+# =============================================================================
+# Предпросмотр обмена kWh → EFHC (ничего не списывает)
+# -----------------------------------------------------------------------------
+
+# Используем готовую универсальную схему из common_schemas:
+#   ExchangePreviewDTO (ok, available_kwh, max_exchangeable_kwh, rate_kwh_to_efhc, detail)
+# Для обратной совместимости оставляем псевдоним:
+ExchangePreviewOut = ExchangePreviewDTO
+
+# =============================================================================
+# Пояснения:
+# • Эти схемы предназначены для user_routes: профиль/балансы, панели-summary,
+#   предпросмотр обмена. Все «числа» приходят строками с 8 знаками (канон).
+# • gen_per_sec_* — это константы для UI-анимации; фронт не пересчитывает
+#   «суточные» величины, только анимирует и периодически сверяется с бекендом.
+# • Если в старом коде встречались daily_* поля — их нужно удалить/переименовать
+#   при обновлении роутов на эти схемы.
+# =============================================================================

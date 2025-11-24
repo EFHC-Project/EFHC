@@ -1,5 +1,1 @@
-"""Admin shop routes."""
-
-from fastapi import APIRouter
-
-router = APIRouter()
+# Логика будет добавлена в следующих итерациях по канону EFHC. TODO запрещён.
